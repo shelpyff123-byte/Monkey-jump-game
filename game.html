@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐒 قفز القرد الماهر</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .game-wrapper {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .title {
+            color: #ffd700;
+            font-size: 1.8em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+            padding: 10px 20px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-value.coins {
+            color: #4ade80;
+        }
+
+        #gameCanvas {
+            border-radius: 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 35px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-shop {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(74, 222, 128, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .menu-box {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .menu-title {
+            color: #ffd700;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .menu-subtitle {
+            color: white;
+            opacity: 0.8;
+            margin-bottom: 25px;
+        }
+
+        .menu-stats {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .menu-stats p {
+            color: white;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .menu-stats span {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .shop-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .shop-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .shop-item.selected {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .shop-item.locked {
+            opacity: 0.5;
+        }
+
+        .shop-emoji {
+            font-size: 2.5em;
+            display: block;
+        }
+
+        .shop-name {
+            color: white;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .shop-price {
+            color: #4ade80;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .worlds-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .world-btn {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .world-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .world-btn.active {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .world-btn.locked {
+            opacity: 0.4;
+        }
+
+        .world-emoji {
+            font-size: 2em;
+            display: block;
+        }
+
+        .world-name {
+            color: white;
+            font-size: 0.7em;
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .instructions {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+
+        .daily-reward {
+            background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+            color: #1a1a2e;
+            padding: 15px;
+            border-radius: 15px;
+            margin: 15px 0;
+            font-weight: bold;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .ad-banner {
+            background: linear-gradient(90deg, #ff6b6b, #ffd93d);
+            color: #1a1a2e;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="header">
+            <div class="title">🐒 قفز القرد الماهر</div>
+            <div class="stats-row">
+                <div class="stat">
+                    <div class="stat-label">المستوى</div>
+                    <div class="stat-value" id="level">1</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">النقاط</div>
+                    <div class="stat-value" id="score">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">أعلى نتيجة</div>
+                    <div class="stat-value" id="highscore">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">عملات</div>
+                    <div class="stat-value coins" id="coins">0</div>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="500" height="400"></canvas>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn" onclick="startGame()">▶ ابدأ اللعب</button>
+            <button class="btn btn-shop" onclick="openShop()">🛒 المتجر</button>
+            <button class="btn btn-secondary" onclick="openWorlds()">🌍 العوالم</button>
+        </div>
+
+        <p class="instructions">💡 اضغط SPACE أو انقر للقفز - اجمع النجوم وتجنب الحواجز!</p>
+    </div>
+
+    <!-- Main Menu Overlay -->
+    <div class="menu-overlay" id="mainMenu">
+        <div class="menu-box">
+            <div class="menu-title">🐒 قفز القرد الماهر</div>
+            <div class="menu-subtitle">اجمع أكبر عدد من النجوم!</div>
+            
+            <div class="daily-reward" onclick="claimDailyReward()">
+                🎁 خذ مكافأتك اليومية (+10 عملات)
+            </div>
+            
+            <div class="menu-stats">
+                <p>أعلى نتيجة: <span id="menuHighscore">0</span></p>
+                <p>المستوى الحالي: <span id="menuLevel">1</span></p>
+                <p>عملاتك: <span id="menuCoins">0</span></p>
+            </div>
+
+            <button class="btn btn-primary" onclick="startGameFromMenu()" style="width: 100%; margin-bottom: 10px;">
+                ▶ ابدأ اللعب
+            </button>
+            <button class="btn btn-shop" onclick="openShop()" style="width: 100%; margin-bottom: 10px;">
+                🛒 المتجر
+            </button>
+            <button class="btn btn-secondary" onclick="openWorlds()" style="width: 100%;">
+                🌍 العوالم
+            </button>
+
+            <div class="ad-banner" onclick="watchAd()">
+                📺 شاهد إعلان واحصل على 50 عملة!
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Overlay -->
+    <div class="menu-overlay hidden" id="shopMenu">
+        <div class="menu-box">
+            <div class="menu-title">🛒 المتجر</div>
+            <div class="menu-subtitle">عملاتك: <span id="shopCoins" style="color: #4ade80;">0</span></div>
+            
+            <div class="shop-grid" id="shopGrid">
+                <!-- Shop items will be generated by JS -->
+            </div>
+
+            <button class="btn btn-secondary" onclick="closeShop()" style="width: 100%;">
+                🔙 رجوع
+            </button>
+        </div>
+    </div>
+
+    <!-- Worlds Overlay -->
+    <div class="menu-overlay hidden" id="worldsMenu">
+        <div class="menu-box">
+            <div class="menu-title">🌍 العوالم</div>
+            <div class="menu-subtitle">اختر عالمك!</div>
+            
+            <div class="worlds-grid" id="worldsGrid">
+                <!-- World buttons will be generated by JS -->
+            </div>
+
+            <button class="btn btn-secondary" onclick="closeWorlds()" style="width: 100%;">
+                🔙 رجوع
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div class="menu-overlay hidden" id="gameOverMenu">
+        <div class="menu-box">
+            <div class="menu-title">😢 انتهت اللعبة!</div>
+            <div class="menu-subtitle">حاول مرة أخرى</div>
+            
+            <div class="menu-stats">
+                <p>نقاطك: <span id="finalScore" style="color: #ffd700; font-size: 1.5em;">0</span></p>
+                <p>عملات مكتسبة: <span id="finalCoins" style="color: #4ade80;">0</span></p>
+                <p>أعلى نتيجة: <span id="finalHighscore">0</span></p>
+            </div>
+
+            <button class="btn btn-primary" onclick="startGameFromMenu()" style="width: 100%; margin-bottom: 10px;">
+                ▶ العب مرة أخرى
+            </button>
+            <button class="btn btn-secondary" onclick="goToMenu()" style="width: 100%;">
+                🔙 القائمة الرئيسية
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game Configuration
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game State
+        let gameState = {
+            isPlaying: false,
+            score: 0,
+            coins: 0,
+            level: 1,
+            highscore: 0,
+            selectedCharacter: 0,
+            selectedWorld: 0,
+            dailyReward: 0,
+            characters: [
+                { emoji: '🐒', name: 'القرد', price: 0, unlocked: true },
+                { emoji: '🦊', name: 'الثعلب', price: 50, unlocked: false },
+                { emoji: '🐼', name: 'الباندا', price: 100, unlocked: false },
+                { emoji: '🦁', name: 'الأسد', price: 200, unlocked: false },
+                { emoji: '🦄', name: 'وحيد القرن', price: 500, unlocked: false },
+                { emoji: '🤖', name: 'الروبوت', price: 1000, unlocked: false }
+            ],
+            worlds: [
+                { emoji: '🌳', name: 'الغابة', color: '#2d5a27', obstacle: '🪵', unlocked: true },
+                { emoji: '🏜️', name: 'الصحراء', color: '#c9a227', obstacle: '🌵', unlocked: true },
+                { emoji: '🏔️', name: 'الجبال', color: '#6b7280', obstacle: '🪨', unlocked: false },
+                { emoji: '❄️', name: 'الثلج', color: '#93c5fd', obstacle: '🧊', unlocked: false },
+                { emoji: '🚀', name: 'الفضاء', color: '#1e1b4b', obstacle: '☄️', unlocked: false }
+            ]
+        };
+
+        // Load from localStorage
+        function loadGame() {
+            const saved = localStorage.getItem('monkeyJumpGame');
+            if (saved) {
+                const data = JSON.parse(saved);
+                Object.assign(gameState, data);
+            }
+            updateUI();
+        }
+
+        // Save to localStorage
+        function saveGame() {
+            localStorage.setItem('monkeyJumpGame', JSON.stringify(gameState));
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('coins').textContent = gameState.coins;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('highscore').textContent = gameState.highscore;
+            document.getElementById('menuHighscore').textContent = gameState.highscore;
+            document.getElementById('menuLevel').textContent = gameState.level;
+            document.getElementById('menuCoins').textContent = gameState.coins;
+            document.getElementById('shopCoins').textContent = gameState.coins;
+        }
+
+        // Player
+        let player = {
+            x: 50,
+            y: 300,
+            width: 40,
+            height: 40,
+            velocityY: 0,
+            isJumping: false,
+            groundY: 300
+        };
+
+        // Game Objects
+        let obstacles = [];
+        let stars = [];
+        let particles = [];
+        let gameSpeed = 5;
+        let frameCount = 0;
+
+        // World settings
+        function getWorldSettings() {
+            const world = gameState.worlds[gameState.selectedWorld];
+            return {
+                bgColor: world.color,
+                obstacleEmoji: world.obstacle
+            };
+        }
+
+        // Initialize game
+        function initGame() {
+            player.y = player.groundY;
+            player.velocityY = 0;
+            player.isJumping = false;
+            obstacles = [];
+            stars = [];
+            particles = [];
+            gameSpeed = 5 + (gameState.level * 0.5);
+            frameCount = 0;
+            gameState.score = 0;
+            updateUI();
+        }
+
+        // Start game
+        function startGame() {
+            initGame();
+            gameState.isPlaying = true;
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('gameOverMenu').classList.add('hidden');
+            gameLoop();
+        }
+
+        function startGameFromMenu() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('gameOverMenu').classList.add('hidden');
+            startGame();
+        }
+
+        // Jump
+        function jump() {
+            if (!player.isJumping && gameState.isPlaying) {
+                player.velocityY = -15;
+                player.isJumping = true;
+                createParticles(player.x, player.y + 40, '💨', 3);
+            }
+        }
+
+        // Create particles
+        function createParticles(x, y, emoji, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x + Math.random() * 40,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5,
+                    emoji: emoji,
+                    life: 30
+                });
+            }
+        }
+
+        // Spawn obstacle
+        function spawnObstacle() {
+            const settings = getWorldSettings();
+            obstacles.push({
+                x: canvas.width,
+                y: player.groundY + 10,
+                width: 30,
+                height: 30,
+                emoji: settings.obstacleEmoji
+            });
+        }
+
+        // Spawn star
+        function spawnStar() {
+            stars.push({
+                x: canvas.width,
+                y: 100 + Math.random() * 150,
+                width: 25,
+                height: 25,
+                collected: false
+            });
+        }
+
+        // Update game
+        function update() {
+            if (!gameState.isPlaying) return;
+
+            frameCount++;
+
+            // Player physics
+            player.velocityY += 0.8;
+            player.y += player.velocityY;
+
+            if (player.y >= player.groundY) {
+                player.y = player.groundY;
+                player.velocityY = 0;
+                player.isJumping = false;
+            }
+
+            // Spawn objects
+            if (frameCount % (100 - gameState.level * 2) === 0) {
+                spawnObstacle();
+            }
+            if (frameCount % 80 === 0) {
+                spawnStar();
+            }
+
+            // Update obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].x -= gameSpeed;
+
+                // Collision
+                if (checkCollision(player, obstacles[i])) {
+                    gameOver();
+                    return;
+                }
+
+                // Remove off-screen
+                if (obstacles[i].x < -50) {
+                    obstacles.splice(i, 1);
+                    gameState.score += 10;
+                    updateUI();
+                }
+            }
+
+            // Update stars
+            for (let i = stars.length - 1; i >= 0; i--) {
+                stars[i].x -= gameSpeed;
+
+                // Collection
+                if (!stars[i].collected && checkCollision(player, stars[i])) {
+                    stars[i].collected = true;
+                    gameState.score += 25;
+                    gameState.coins += 1;
+                    createParticles(stars[i].x, stars[i].y, '⭐', 5);
+                    updateUI();
+                }
+
+                // Remove off-screen
+                if (stars[i].x < -50) {
+                    stars.splice(i, 1);
+                }
+            }
+
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].x += particles[i].vx;
+                particles[i].y += particles[i].vy;
+                particles[i].life--;
+                if (particles[i].life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // Level up
+            if (gameState.score >= gameState.level * 500) {
+                gameState.level++;
+                gameSpeed += 0.5;
+                createParticles(canvas.width / 2, canvas.height / 2, '🎉', 20);
+                updateUI();
+            }
+        }
+
+        // Check collision
+        function checkCollision(a, b) {
+            return a.x < b.x + b.width &&
+                   a.x + a.width > b.x &&
+                   a.y < b.y + b.height &&
+                   a.y + a.height > b.y;
+        }
+
+        // Draw game
+        function draw() {
+            const settings = getWorldSettings();
+
+            // Background
+            ctx.fillStyle = settings.bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Ground
+            ctx.fillStyle = '#8b5a2b';
+            ctx.fillRect(0, player.groundY + 40, canvas.width, 60);
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(0, player.groundY + 45, canvas.width, 5);
+
+            // Draw stars
+            ctx.font = '25px Arial';
+            for (let star of stars) {
+                if (!star.collected) {
+                    ctx.fillText('⭐', star.x, star.y + 20);
+                }
+            }
+
+            // Draw player
+            const char = gameState.characters[gameState.selectedCharacter];
+            ctx.font = '40px Arial';
+            ctx.fillText(char.emoji, player.x, player.y + 35);
+
+            // Draw obstacles
+            ctx.font = '30px Arial';
+            for (let obs of obstacles) {
+                ctx.fillText(obs.emoji, obs.x, obs.y + 25);
+            }
+
+            // Draw particles
+            ctx.font = '20px Arial';
+            for (let p of particles) {
+                ctx.globalAlpha = p.life / 30;
+                ctx.fillText(p.emoji, p.x, p.y);
+                ctx.globalAlpha = 1;
+            }
+
+            // Score display
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText(`⭐ ${gameState.score}`, 10, 30);
+            ctx.fillText(`🪙 ${gameState.coins}`, 10, 55);
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!gameState.isPlaying) return;
+
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Game over
+        function gameOver() {
+            gameState.isPlaying = false;
+
+            // Save highscore
+            if (gameState.score > gameState.highscore) {
+                gameState.highscore = gameState.score;
+            }
+
+            // Calculate coins earned
+            const earnedCoins = Math.floor(gameState.score / 50);
+            gameState.coins += earnedCoins;
+
+            saveGame();
+            updateUI();
+
+            // Show game over menu
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('finalCoins').textContent = earnedCoins;
+            document.getElementById('finalHighscore').textContent = gameState.highscore;
+            document.getElementById('gameOverMenu').classList.remove('hidden');
+        }
+
+        // Go to menu
+        function goToMenu() {
+            document.getElementById('gameOverMenu').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+            updateUI();
+        }
+
+        // Open shop
+        function openShop() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('shopMenu').classList.remove('hidden');
+            renderShop();
+        }
+
+        function closeShop() {
+            document.getElementById('shopMenu').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+        }
+
+        // Render shop
+        function renderShop() {
+            const grid = document.getElementById('shopGrid');
+            grid.innerHTML = '';
+
+            gameState.characters.forEach((char, index) => {
+                const item = document.createElement('div');
+                item.className = 'shop-item';
+                if (char.unlocked) item.classList.add('selected');
+                if (!char.unlocked && gameState.coins < char.price) item.classList.add('locked');
+
+                item.innerHTML = `
+                    <span class="shop-emoji">${char.emoji}</span>
+                    <div class="shop-name">${char.name}</div>
+                    <div class="shop-price">${char.unlocked ? '✓' : char.price + ' 🪙'}</div>
+                `;
+
+                item.onclick = () => buyCharacter(index);
+                grid.appendChild(item);
+            });
+        }
+
+        // Buy character
+        function buyCharacter(index) {
+            const char = gameState.characters[index];
+
+            if (char.unlocked) {
+                gameState.selectedCharacter = index;
+                saveGame();
+                renderShop();
+            } else if (gameState.coins >= char.price) {
+                gameState.coins -= char.price;
+                char.unlocked = true;
+                gameState.selectedCharacter = index;
+                saveGame();
+                updateUI();
+                renderShop();
+            }
+        }
+
+        // Open worlds
+        function openWorlds() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('worldsMenu').classList.remove('hidden');
+            renderWorlds();
+        }
+
+        function closeWorlds() {
+            document.getElementById('worldsMenu').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+        }
+
+        // Render worlds
+        function renderWorlds() {
+            const grid = document.getElementById('worldsGrid');
+            grid.innerHTML = '';
+
+            gameState.worlds.forEach((world, index) => {
+                const btn = document.createElement('div');
+                btn.className = 'world-btn';
+                if (world.unlocked) btn.classList.add('active');
+                if (!world.unlocked) btn.classList.add('locked');
+
+                btn.innerHTML = `
+                    <span class="world-emoji">${world.emoji}</span>
+                    <div class="world-name">${world.name}</div>
+                `;
+
+                btn.onclick = () => selectWorld(index);
+                grid.appendChild(btn);
+            });
+        }
+
+        // Select world
+        function selectWorld(index) {
+            const world = gameState.worlds[index];
+            if (world.unlocked) {
+                gameState.selectedWorld = index;
+                saveGame();
+                renderWorlds();
+            }
+        }
+
+        // Daily reward
+        function claimDailyReward() {
+            const today = new Date().toDateString();
+            if (gameState.dailyReward !== today) {
+                gameState.coins += 10;
+                gameState.dailyReward = today;
+                saveGame();
+                updateUI();
+                alert('🎁 حصلت على 10 عملات!');
+            } else {
+                alert('⏰你已经领取了今天的奖励!');
+            }
+        }
+
+        // Watch ad (simulated)
+        function watchAd() {
+            alert('📺 هنا يمكنك ربط إعلانات Google AdMob!\n\nللربط الحقيقي، تحتاج:\n1. حساب AdMob\n2. كود الإعلانات\n3. ربط التطبيق');
+        }
+
+        // Controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (gameState.isPlaying) {
+                    jump();
+                } else {
+                    startGameFromMenu();
+                }
+            }
+        });
+
+        canvas.addEventListener('click', () => {
+            if (gameState.isPlaying) {
+                jump();
+            }
+        });
+
+        // Initialize
+        loadGame();
+        updateUI();
+    </script>
+</body>
+</html>
